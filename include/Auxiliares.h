@@ -7,6 +7,7 @@ public:
     ~Grafo();
     int* bfs(int start, int end, int& pathSize);
     bool ehVizinho(int u, int v);
+    int getSize();
 private:
     int size;
     int** adjMatrix;
