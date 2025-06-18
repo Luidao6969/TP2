@@ -5,15 +5,14 @@
 
 class Escalonador {
 private:
-    MinHeap* fila;
-
+    MinHeap* filaEventos;
 public:
-    Escalonador(int capacidade);
+    Escalonador(int capacidade, Grafo* grafo, int intervalo, int tempoLimite);
     ~Escalonador();
 
     void inserirEvento(Evento* e);
     Evento* proximoEvento();
-    bool vazio() const;
+    bool vazio();
 };
 
 #endif
