@@ -1,90 +1,128 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "../include/Auxiliares.h"
 #include "../include/Pacote.h"
 #include "../include/Armazem.h"
 #include "../include/Transporte.h"
+#include "../include/Escalonador.h"
+#include "../include/Simulador.h"
 
-int main() {
-    const int numArmazens = 5;
-    int raw[5][5] = {
-        {0, 1, 1, 0, 0},
-        {1, 0, 1, 1, 0},
-        {1, 1, 0, 0, 1},
-        {0, 1, 0, 0, 1},
-        {0, 0, 1, 1, 0}
-    };
+using namespace std;
 
-    // Construindo grafo
-    int** matrix = new int*[numArmazens];
+void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& grafo, Armazem**& armazens, int& numArmazens) {
+    ifstream arquivo(nomeArquivo);
+    if (!arquivo.is_open()) {
+        cerr << "Erro ao abrir arquivo de entrada!" << endl;
+        exit(1);
+    }
+    int capacidadeTransporte, latenciaTransporte, intervaloTransportes, custoRemocao;
+    // Lê parâmetros de transporte
+    arquivo >> capacidadeTransporte 
+            >> latenciaTransporte
+            >> intervaloTransportes
+            >> custoRemocao;
+
+    cout << "Parâmetros de transporte:\n"
+         << "  Capacidade: " << capacidadeTransporte << "\n"
+         << "  Latência: " << latenciaTransporte << "\n"
+         << "  Intervalo: " << intervaloTransportes << "\n"
+         << "  Custo remoção: " << custoRemocao << endl;
+
+    // Lê número de armazéns
+    arquivo >> numArmazens;
+    cout << "Número de armazéns: " << numArmazens << endl;
+
+    // Lê matriz de adjacência
+    int** matriz = new int*[numArmazens];
     for (int i = 0; i < numArmazens; ++i) {
-        matrix[i] = new int[numArmazens];
-        for (int j = 0; j < numArmazens; ++j)
-            matrix[i][j] = raw[i][j];
-    }
-    Grafo grafo(numArmazens, matrix);
-
-    // Criando armazéns
-    Armazem* armazens[numArmazens];
-    for (int i = 0; i < numArmazens; ++i)
-        armazens[i] = new Armazem(i, numArmazens);
-
-    // Criando pacotes
-    Pacote* pacotes[5];
-    pacotes[0] = new Pacote(1, 0, 4, 10, grafo);
-    pacotes[1] = new Pacote(2, 1, 3, 12, grafo);
-    pacotes[2] = new Pacote(3, 2, 0, 15, grafo);
-    pacotes[3] = new Pacote(4, 4, 1, 18, grafo);
-    pacotes[4] = new Pacote(5, 0, 3, 20, grafo);
-    pacotes[5] = new Pacote(6, 0, 2, 9, grafo);
-    pacotes[6] = new Pacote(7, 1, 4, 14, grafo);
-    pacotes[7] = new Pacote(8, 3, 0, 16, grafo);
-    pacotes[8] = new Pacote(9, 2, 4, 11, grafo);
-    pacotes[9] = new Pacote(10, 4, 0, 13, grafo);
-
-    // Inserir pacotes no armazém de origem
-    for (int i = 0; i < 10; ++i) {
-        int origem = pacotes[i]->getOrigem();
-        int prox = pacotes[i]->getProximoPasso();
-        armazens[origem]->getStack(prox).push(pacotes[i]);
-    }
-
-    // Simular transporte por algumas rodadas
-    for (int rodada = 0; rodada < 3; ++rodada) {
-        std::cout << "\n--- Rodada " << rodada + 1 << " ---\n";
-        for (int i = 0; i < numArmazens; ++i) {
-            for (int j = 0; j < numArmazens; ++j) {
-                if (grafo.ehVizinho(i, j)) {
-                    Transporte t(i, j, 1); // transporte com capacidade 1
-                    StackPacote& stack = armazens[i]->getStack(j);
-                    for (int k = 0; k < 2 && !stack.vazia(); ++k) {
-                        Pacote* p = stack.pop();
-                        std::cout << "Transportando pacote " << p->getId() << " de " << i << " para " << j << "\n";
-                        p->avancarNaRota(); // atualiza posição atual do pacote
-                        if (p->getProximoPasso() != -1)
-                            armazens[j]->getStack(p->getProximoPasso()).push(p);
-                        else
-                            std::cout << "Pacote " << p->getId() << " chegou ao destino final.\n";
-                    }
-                }
+        matriz[i] = new int[numArmazens];
+        for (int j = 0; j < numArmazens; ++j) {
+            if (!(arquivo >> matriz[i][j])) {
+                cerr << "Erro ao ler matriz de adjacência!" << endl;
+                exit(1);
             }
         }
     }
 
-    // Mostrar pacotes restantes em cada armazém
-    std::cout << "\n--- Estado Final dos Armazéns ---\n";
+    // Cria grafo
+    grafo = new Grafo(numArmazens, matriz);
+    cout << "Grafo criado com " << grafo->getSize() << " armazéns" << endl;
+
+    // Cria armazéns
+    armazens = new Armazem*[numArmazens];
     for (int i = 0; i < numArmazens; ++i) {
-        //std::cout << "Armazém " << i << ":\n";
-        armazens[i]->listarPacotes();
+        armazens[i] = new Armazem(i, numArmazens);
     }
 
-    // Limpeza
-    for (int i = 0; i < 10; ++i)
-        delete pacotes[i];
-    for (int i = 0; i < numArmazens; ++i)
+    // Lê número total de pacotes
+    int totalPacotes;
+    arquivo >> totalPacotes;
+    cout << "Total de pacotes: " << totalPacotes << endl;
+
+    // Lê pacotes
+    string linha;
+    getline(arquivo, linha); // Consome a quebra de linha após o número de pacotes
+    
+    for (int i = 0; i < totalPacotes; ++i) {
+        if (!getline(arquivo, linha)) {
+            cerr << "Erro: Arquivo termina antes do esperado!" << endl;
+            break;
+        }
+
+        if (linha.empty()) continue;
+        
+        istringstream iss(linha);
+        int tempo, id, origem, destino;
+        string tempStr, lixo;
+        
+        if (!(iss >> tempo >> lixo >> id >> lixo >> origem >> lixo >> destino)) {
+            cerr << "Erro ao ler linha: " << linha << endl;
+            continue;
+        }
+
+        cout << "Criando evento: tempo=" << tempo << " id=" << id 
+             << " origem=" << origem << " destino=" << destino << endl;
+        
+        // Verifica valores válidos
+        if (origem < 0 || origem >= numArmazens || destino < 0 || destino >= numArmazens) {
+            cerr << "Erro: Origem ou destino inválido na linha: " << linha << endl;
+            continue;
+        }
+
+        Evento* evento = new Evento(tempo, 1, id, origem, destino);
+        simulador.adicionarEvento(evento);
+    }
+
+    arquivo.close();
+}
+
+int main() {
+    Grafo* grafo = nullptr;
+    Armazem** armazens = nullptr;
+    int numArmazens = 0;
+
+    // Cria simulador com capacidade inicial para 1000 eventos
+    Simulador simulador(0, nullptr, 1000);
+
+    // Lê arquivo de entrada
+    lerArquivoEntrada("ex1.txt", simulador, grafo, armazens, numArmazens);
+
+    // Configura o simulador
+    simulador.setGrafo(grafo);
+    simulador.setArmazens(armazens);
+    simulador.setNumArmazens(numArmazens);
+
+    // Executa simulação
+    simulador.executar(1000);
+
+    // Limpeza de memória
+    for (int i = 0; i < numArmazens; ++i) {
         delete armazens[i];
-    for (int i = 0; i < numArmazens; ++i)
-        delete[] matrix[i];
-    delete[] matrix;
+    }
+    delete[] armazens;
+    
+    delete grafo;
 
     return 0;
 }
