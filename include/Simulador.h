@@ -1,30 +1,31 @@
 #ifndef SIMULADOR_H
 #define SIMULADOR_H
 
-#include "../include/Escalonador.h"
+#include "Escalonador.h"
 #include "Armazem.h"
-#include "../include/Auxiliares.h"
+#include "Auxiliares.h"
+#include "Transporte.h"
 
 class Simulador {
 private:
-    Escalonador escalonador;
+    Escalonador* escalonador;
     Armazem** armazens;
+    Grafo* grafo;
     int numArmazens;
-    int capacidadeTransporte;
-    int latenciaTransporte;
-    int intervaloTransportes;
-    int custoRemocao;
-    
-    void processarEventoPacote(Evento* evento);
-    void processarEventoTransporte(Evento* evento);
+    int tempoAtual;
+    void processarChegada(Evento* evento);
+    void processarTransporte(Evento* evento);
+
     
 public:
-    Simulador(int capacidade, int latencia, int intervalo, int custo, 
-              int numArmazens, int** matrizAdj);
+    Simulador(int numArmazens, Grafo* grafo, int capacidadeEscalonador);
     ~Simulador();
-    
-    void adicionarPacote(Pacote* pacote);
-    void executar();
+    void setArmazens(Armazem** a);
+    void setGrafo(Grafo* g);
+    void setNumArmazens(int n);
+    void adicionarEvento(Evento* evento);
+    void executar(int tempoMaximo);
+    void imprimirEstadoAtual();
 };
 
 #endif
