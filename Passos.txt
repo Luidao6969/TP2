@@ -1,0 +1,41 @@
+Criar a classe Pacote (Feito)
+Criar a classe Armazém (Feito)
+Criar a classe Transporte (Feito) 
+Criar o algorítmo de busca em largura para criar a rota (Feito)
+Criar a lógica para mapear vizinhos de cada armazém (Feito)
+Testar (Feito)
+
+
+Introduzir a lógica de seçoes no armazém (Feito, a secao existe mas ela não é utilizada)
+Introduzir a lógica de tempo entre transportes
+Testas leitura do arquivo
+
+
+Os tempos acontecem em conjunto, ou seja, os transportes sempre acontecem em um determinado periodo de tempo e todos os transportes acontecem juntos
+Olhar a lógica do escalonador
+
+1. Tempo de transporte entre dois armazéns
+2. Tempo de remoção do pacote na respectiva seção do armazém.
+3. Intervalo de tempo entre transportes
+
+PACOTE
+1. Não foi postado
+2. Chegada escalonada a um armazém (postagem ou transporte)
+3. Armazenado na seção associada ao próximo destino de um armazém
+4. Removido da seção para transporte
+5. Entregue
+
+2       → Capacidade de transporte (2 pacotes por vez)
+20      → Latência do transporte (20 unidades de tempo)
+100     → Intervalo entre transportes (100 unidades de tempo)
+1       → Custo de remoção (1 unidade de tempo por pacote removido)
+4       → Número de armazéns (0 a 3)
+0 0 1 0  → Armazém 0 conectado ao 2
+0 0 1 0  → Armazém 1 conectado ao 2
+1 1 0 1  → Armazém 2 conectado ao 0, 1 e 3
+0 0 1 0  → Armazém 3 conectado ao 2
+8       → Número total de pacotes
+
+
+Olhar último arquivo do DeepSeek, falta somente corrigir o segmentation fault e a lógica de tempo
+g++ src/main.cpp src/Auxiliares.cpp src/Pacote.cpp src/Transporte.cpp src/Armazem.cpp src/Escalonador.cpp src/Simulador.cpp -Iinclude -o programa
