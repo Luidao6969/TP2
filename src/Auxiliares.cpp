@@ -84,6 +84,10 @@ bool Grafo::ehVizinho(int u, int v) {
     return adjMatrix[u][v] == 1;
 }
 
+int Grafo::getSize(){
+    return size;
+}
+
 Evento::Evento(int tempo, int tipo, int id_pacote, int origem, int destino)
     : tempo(tempo), tipo(tipo), id_pacote(id_pacote), origem(origem), destino(destino) {}
 
