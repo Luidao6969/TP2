@@ -1,21 +1,22 @@
 #include "../include/Escalonador.h"
 
-Escalonador::Escalonador(int capacidade) {
-    fila = new MinHeap(capacidade);
+Escalonador::Escalonador(int capacidade, Grafo* grafo, int intervalo, int tempoLimite) {
+    filaEventos = new MinHeap(capacidade);
 }
 
 Escalonador::~Escalonador() {
-    delete fila;
+    delete filaEventos;
 }
 
 void Escalonador::inserirEvento(Evento* e) {
-    fila->inserir(e);
+    filaEventos->inserir(e);
 }
 
 Evento* Escalonador::proximoEvento() {
-    return fila->extrairMinimo();
+    return filaEventos->extrairMinimo();
 }
 
-bool Escalonador::vazio() const {
-    return fila->vazia();
+bool Escalonador::vazio(){
+    return filaEventos->vazia();
 }
+
