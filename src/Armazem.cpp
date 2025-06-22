@@ -8,6 +8,17 @@ Armazem::~Armazem() {
     delete[] secoes;
 }
 
+void Armazem::limparTudo() {
+    if (!secoes) return; // Verificação crítica
+    
+    for (int i = 0; i < num_secoes; ++i) {
+        while (!secoes[i].vazia()) {
+            Pacote* p = secoes[i].pop();
+            delete p; // Libera cada pacote
+        }
+    }
+}
+
 StackPacote& Armazem::getStack(int proximo_destino) {
     return secoes[proximo_destino];
 }
@@ -54,5 +65,5 @@ Pacote* StackPacote::pop() {
 }
 
 bool StackPacote::vazia(){
-    return topo == 0;
+    return pacotes == nullptr || topo <= 0;
 }

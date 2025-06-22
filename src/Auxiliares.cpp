@@ -13,10 +13,36 @@ Grafo::Grafo(int size, int** matrix) {
 }
 
 Grafo::~Grafo() {
-    for (int i = 0; i < size; ++i) {
-        delete[] adjMatrix[i];
+    if (adjMatrix) {
+        for (int i = 0; i < size; ++i) {
+            if (adjMatrix[i]) {
+                delete[] adjMatrix[i];
+                adjMatrix[i] = nullptr;
+            }
+        }
+        delete[] adjMatrix;
+        adjMatrix = nullptr;
     }
-    delete[] adjMatrix;
+}
+
+// Retorna uma cópia segura da matriz de adjacência
+int** Grafo::getAdjMatrix(){
+        int** copy = new int*[size];
+        for (int i = 0; i < size; ++i) {
+            copy[i] = new int[size];
+            for (int j = 0; j < size; ++j) {
+                copy[i][j] = adjMatrix[i][j];
+            }
+        }
+        return copy;
+}
+
+    // Método auxiliar para liberar a cópia da matriz
+void Grafo::freeMatrix(int** matrix, int size) {
+        for (int i = 0; i < size; ++i) {
+            delete[] matrix[i];
+        }
+        delete[] matrix;
 }
 
 int* Grafo::bfs(int start, int end, int& pathSize) {

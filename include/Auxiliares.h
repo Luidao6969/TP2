@@ -8,6 +8,8 @@ public:
     int* bfs(int start, int end, int& pathSize);
     bool ehVizinho(int u, int v);
     int getSize();
+    int** getAdjMatrix();
+    static void freeMatrix(int** matrix, int size);
 private:
     int size;
     int** adjMatrix;

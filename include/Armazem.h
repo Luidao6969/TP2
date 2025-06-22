@@ -27,5 +27,6 @@ public:
     StackPacote& getStack(int destino);
     void receberPacote(Pacote* p);
     void listarPacotes() const;
+    void limparTudo();
 };
 #endif

@@ -101,28 +101,34 @@ int main() {
     Grafo* grafo = nullptr;
     Armazem** armazens = nullptr;
     int numArmazens = 0;
-
-    // Cria simulador com capacidade inicial para 1000 eventos
-    Simulador simulador(0, nullptr, 1000);
-
-    // Lê arquivo de entrada
-    lerArquivoEntrada("ex1.txt", simulador, grafo, armazens, numArmazens);
-
-    // Configura o simulador
-    simulador.setGrafo(grafo);
-    simulador.setArmazens(armazens);
-    simulador.setNumArmazens(numArmazens);
-
-    // Executa simulação
-    simulador.executar(1000);
-
-    // Limpeza de memória
-    for (int i = 0; i < numArmazens; ++i) {
-        delete armazens[i];
-    }
-    delete[] armazens;
     
-    delete grafo;
+    {
+        // Escopo para garantir destruição do simulador antes dos outros objetos
+        Simulador simulador(0, nullptr, 1000);
+        
+        // Carrega dados
+        lerArquivoEntrada("ex1.txt", simulador, grafo, armazens, numArmazens);
+        
+        // Configura
+        simulador.setGrafo(grafo);
+        simulador.setArmazens(armazens);
+        simulador.setNumArmazens(numArmazens);
+        
+        // Executa
+        simulador.executar(1000);
+        
+        // Limpa pacotes explicitamente antes de destruir o simulador
+        for (int i = 0; i < numArmazens; ++i) {
+            armazens[i]->limparTudo();
+        }
+    } // Simulador é destruído aqui
+
+    // Libera memória restante
+    if (grafo) {
+        int** matrix = grafo->getAdjMatrix();
+        Grafo::freeMatrix(matrix, grafo->getSize());
+        delete grafo;
+    }
 
     return 0;
 }

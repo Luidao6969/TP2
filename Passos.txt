@@ -37,5 +37,4 @@ PACOTE
 8       → Número total de pacotes
 
 
-Olhar último arquivo do DeepSeek, falta somente corrigir o segmentation fault e a lógica de tempo
 g++ src/main.cpp src/Auxiliares.cpp src/Pacote.cpp src/Transporte.cpp src/Armazem.cpp src/Escalonador.cpp src/Simulador.cpp -Iinclude -o programa
