@@ -2,8 +2,11 @@
 #include <iostream>
 using namespace std;
 
-Transporte::Transporte(int origem, int destino, int capacidade)
-    : origem(origem), destino(destino), capacidade(capacidade), count(0) {
+Transporte::Transporte(int origem, int destino, int capacidade, 
+                      int tempoTransporte, int tempoDesempilhar)
+    : origem(origem), destino(destino), capacidade(capacidade),
+      tempoTransporte(tempoTransporte), tempoDesempilhar(tempoDesempilhar),
+      count(0) {
     pacotes = new Pacote*[capacidade];
 }
 
@@ -11,49 +14,46 @@ Transporte::~Transporte() {
     delete[] pacotes;
 }
 
-void Transporte::carregarPacotes(Armazem* armazemOrigem) {
-    if (!armazemOrigem) {
-        cerr << "Armazém de origem inválido!" << endl;
-        return;
-    }
-
+void Transporte::carregarPacotes(Armazem* armazemOrigem, int& tempoAtual) {
+    if (!armazemOrigem) return;
+    
     StackPacote& stack = armazemOrigem->getStack(destino);
     
     for (int i = 0; i < capacidade; ++i) {
         if (stack.vazia()) break;
         
+        // Adiciona tempo de desempilhar
+        tempoAtual += tempoDesempilhar;
+        
         Pacote* p = stack.pop();
         if (p) {
-            if (count < capacidade) {
-                pacotes[count++] = p;
-                cout << "Carregado pacote " << p->getId() << endl;
-            } else {
-                cerr << "Capacidade excedida!" << endl;
-                stack.push(p); // Devolve o pacote se não couber
-                break;
-            }
+            pacotes[count++] = p;
+            cout << "Carregado pacote " << p->getId() 
+                 << " (Tempo: " << tempoAtual << ")" << endl;
         }
     }
 }
 
-void Transporte::descarregarPacotes(Armazem* armazemDestino) {
-    if (!armazemDestino) {
-        cerr << "Armazém de destino inválido!" << endl;
-        return;
-    }
 
+void Transporte::descarregarPacotes(Armazem* armazemDestino, int& tempoAtual) {
+    if (!armazemDestino) return;
+
+    // Tempo de transporte entre armazéns
+    tempoAtual += tempoTransporte;
+    
     for (int i = 0; i < count; ++i) {
         Pacote* p = pacotes[i];
         if (p) {
             int proximoSalto = p->getProximoPasso();
             if (proximoSalto >= 0) {
+                // Tempo para empilhar no destino
+                tempoAtual += tempoDesempilhar; 
+                
                 armazemDestino->getStack(proximoSalto).push(p);
-                cout << "Descarregado pacote " << p->getId() << " em " << proximoSalto << endl;
-            } else {
-                cout << "Pacote " << p->getId() << " chegou ao destino final" << endl;
-                delete p; // Ou outro tratamento para pacotes entregues
+                cout << "Descarregado pacote " << p->getId()
+                     << " (Tempo: " << tempoAtual << ")" << endl;
             }
         }
     }
-    count = 0; // Reseta o contador após descarregar
+    count = 0;
 }

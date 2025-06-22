@@ -81,44 +81,55 @@ void Simulador::processarTransporte(Evento* evento) {
     int destino = evento->getDestino();
     int idPacote = evento->getIdPacote();
 
-    // Cria transporte e move pacotes
-    Transporte transporte(origem, destino, 1); // Capacidade=1
-    transporte.carregarPacotes(armazens[origem]);
-    transporte.descarregarPacotes(armazens[destino]);
-
-    // Verifica se precisa gerar nova chegada
-    Pacote* pacote = armazens[destino]->getStack(destino).pop(); // Simplificação
-    if (pacote->getDestino() != destino) {
-        int tempoChegada = tempoAtual + 2; // Tempo fixo para exemplo
-        Evento* novoEvento = new Evento(tempoChegada, 1, idPacote, destino, pacote->getDestino());
+    if (!podeTransportar(tempoAtual)) {
+        // Agenda novo evento para quando o intervalo permitir
+        int novoTempo = ultimoTransporte + intervaloTransportes;
+        Evento* novoEvento = new Evento(novoTempo, 2, idPacote, origem, destino);
         escalonador->inserirEvento(novoEvento);
+        return;
+    }
+
+    // Atualiza o último tempo de transporte
+    ultimoTransporte = tempoAtual;
+    
+    // Cria transporte com os parâmetros configurados
+    Transporte transporte(origem, destino, capacidadeTransporte,
+                         latenciaTransporte, custoRemocao);
+    
+    // 1. Carrega pacotes (adiciona tempo de desempilhar)
+    transporte.carregarPacotes(armazens[origem], tempoAtual);
+    
+    // 2. Descarrega pacotes (adiciona tempo de transporte e empilhamento)
+    transporte.descarregarPacotes(armazens[destino], tempoAtual);
+
+    // 3. Verifica pacotes no destino que precisam ser encaminhados
+    StackPacote& stackDestino = armazens[destino]->getStack(destino);
+    while (!stackDestino.vazia()) {
+        Pacote* pacote = stackDestino.pop();
+        if (pacote && pacote->getDestino() != destino) {
+            int tempoChegada = tempoAtual + custoRemocao; // Tempo para processar
+            Evento* novoEvento = new Evento(tempoChegada, 1, 
+                                          pacote->getId(), 
+                                          destino, 
+                                          pacote->getDestino());
+            escalonador->inserirEvento(novoEvento);
+        }
+        // Se for o destino final, o pacote é mantido no armazém
     }
 }
 
 void Simulador::executar(int tempoMaximo) {
-    cout << "Iniciando simulação com " << numArmazens << " armazéns" << endl;
-    cout << "Tempo máximo: " << tempoMaximo << endl;
-
     while (!escalonador->vazio() && tempoAtual <= tempoMaximo) {
         Evento* evento = escalonador->proximoEvento();
-        if (!evento) {
-            cerr << "Erro: Evento nulo encontrado!" << endl;
-            continue;
-        }
-
         tempoAtual = evento->getTempo();
-        cout << "\nProcessando evento no tempo " << tempoAtual 
-             << " (Tipo: " << evento->getTipo() 
-             << ", ID: " << evento->getIdPacote() 
-             << ", Origem: " << evento->getOrigem() 
-             << ", Destino: " << evento->getDestino() << ")" << endl;
-
+        
+        // Processa o evento respeitando os tempos
         if (evento->getTipo() == 1) {
             processarChegada(evento);
         } else {
             processarTransporte(evento);
         }
-
+        
         delete evento;
     }
 }
@@ -149,4 +160,16 @@ void Simulador::setArmazens(Armazem** a) {
 void Simulador::setNumArmazens(int n) { 
     numArmazens = n; 
     cout << "Número de armazéns configurado: " << n << endl;
+}
+
+void Simulador::setParametrosTransporte(int capacidade, int latencia, int intervalo, int custo) {
+    capacidadeTransporte = capacidade;
+    latenciaTransporte = latencia;
+    intervaloTransportes = intervalo;
+    custoRemocao = custo;
+    ultimoTransporte = -intervalo; // Permite primeiro transporte no tempo 0
+}
+
+bool Simulador::podeTransportar(int tempoAtual) const {
+    return (tempoAtual - ultimoTransporte) >= intervaloTransportes;
 }

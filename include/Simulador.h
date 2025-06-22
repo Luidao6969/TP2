@@ -15,6 +15,11 @@ private:
     int tempoAtual;
     void processarChegada(Evento* evento);
     void processarTransporte(Evento* evento);
+    int capacidadeTransporte;
+    int latenciaTransporte;
+    int intervaloTransportes;
+    int custoRemocao;
+    int ultimoTransporte;
 
     
 public:
@@ -26,6 +31,8 @@ public:
     void adicionarEvento(Evento* evento);
     void executar(int tempoMaximo);
     void imprimirEstadoAtual();
+    void setParametrosTransporte(int capacidade, int latencia, int intervalo, int custo);
+    bool podeTransportar(int tempoAtual) const;
 };
 
 #endif

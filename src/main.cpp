@@ -16,12 +16,17 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
         cerr << "Erro ao abrir arquivo de entrada!" << endl;
         exit(1);
     }
-    int capacidadeTransporte, latenciaTransporte, intervaloTransportes, custoRemocao;
+
     // Lê parâmetros de transporte
+    int capacidadeTransporte, latenciaTransporte, intervaloTransportes, custoRemocao;
     arquivo >> capacidadeTransporte 
             >> latenciaTransporte
             >> intervaloTransportes
             >> custoRemocao;
+
+    // Configura os parâmetros no simulador
+    simulador.setParametrosTransporte(capacidadeTransporte, latenciaTransporte, 
+                                    intervaloTransportes, custoRemocao);
 
     cout << "Parâmetros de transporte:\n"
          << "  Capacidade: " << capacidadeTransporte << "\n"
@@ -62,7 +67,7 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
 
     // Lê pacotes
     string linha;
-    getline(arquivo, linha); // Consome a quebra de linha após o número de pacotes
+    getline(arquivo, linha); // Consome a quebra de linha
     
     for (int i = 0; i < totalPacotes; ++i) {
         if (!getline(arquivo, linha)) {
@@ -84,7 +89,6 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
         cout << "Criando evento: tempo=" << tempo << " id=" << id 
              << " origem=" << origem << " destino=" << destino << endl;
         
-        // Verifica valores válidos
         if (origem < 0 || origem >= numArmazens || destino < 0 || destino >= numArmazens) {
             cerr << "Erro: Origem ou destino inválido na linha: " << linha << endl;
             continue;
@@ -101,10 +105,10 @@ int main() {
     Grafo* grafo = nullptr;
     Armazem** armazens = nullptr;
     int numArmazens = 0;
-    
+
     {
         // Escopo para garantir destruição do simulador antes dos outros objetos
-        Simulador simulador(0, nullptr, 1000);
+        Simulador simulador(0, nullptr, 10000);
         
         // Carrega dados
         lerArquivoEntrada("ex1.txt", simulador, grafo, armazens, numArmazens);
@@ -126,7 +130,10 @@ int main() {
     // Libera memória restante
     if (grafo) {
         int** matrix = grafo->getAdjMatrix();
-        Grafo::freeMatrix(matrix, grafo->getSize());
+        for (int i = 0; i < grafo->getSize(); ++i) {
+            delete[] matrix[i];
+        }
+        delete[] matrix;
         delete grafo;
     }
 
