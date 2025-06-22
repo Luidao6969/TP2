@@ -6,9 +6,9 @@ Criar a lógica para mapear vizinhos de cada armazém (Feito)
 Testar (Feito)
 
 
-Introduzir a lógica de seçoes no armazém (Feito, a secao existe mas ela não é utilizada)
-Introduzir a lógica de tempo entre transportes
-Testas leitura do arquivo
+Introduzir a lógica de seçoes no armazém (Feito, a secao existe mas ela não é utilizada) 
+Introduzir a lógica de tempo entre transportes (Feito)
+Testas leitura do arquivo (Feito)
 
 
 Os tempos acontecem em conjunto, ou seja, os transportes sempre acontecem em um determinado periodo de tempo e todos os transportes acontecem juntos
@@ -38,3 +38,9 @@ PACOTE
 
 
 g++ src/main.cpp src/Auxiliares.cpp src/Pacote.cpp src/Transporte.cpp src/Armazem.cpp src/Escalonador.cpp src/Simulador.cpp -Iinclude -o programa
+
+
+//------------- Proximos Passos --------------//
+
+- Verificar se está sendo contabilizado o tempo de latencia, transporte e custo de remoção
+- Modificar a saída para igualar a saída de exemplo
