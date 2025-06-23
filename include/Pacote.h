@@ -23,6 +23,7 @@ public:
     void imprimirRota();
     int getDestino();
     int getProximoPasso();
+    int getPosicaoAtual();
     void avancarNaRota();
 };
 

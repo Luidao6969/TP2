@@ -62,6 +62,7 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
 
     // Lê número total de pacotes
     int totalPacotes;
+    int idSequencial = 0;
     arquivo >> totalPacotes;
     cout << "Total de pacotes: " << totalPacotes << endl;
 
@@ -94,7 +95,7 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
             continue;
         }
 
-        Evento* evento = new Evento(tempo, 1, id, origem, destino);
+        Evento* evento = new Evento(tempo, 1, idSequencial++, origem, destino);
         simulador.adicionarEvento(evento);
     }
 
@@ -119,7 +120,7 @@ int main() {
         simulador.setNumArmazens(numArmazens);
         
         // Executa
-        simulador.executar(1000);
+        simulador.executar(10000);
         
         // Limpa pacotes explicitamente antes de destruir o simulador
         for (int i = 0; i < numArmazens; ++i) {

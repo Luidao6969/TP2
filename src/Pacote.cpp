@@ -60,3 +60,7 @@ void Pacote::avancarNaRota() {
 int Pacote::getTempoChegada(){
     return tempo_chegada;
 }
+
+int Pacote::getPosicaoAtual(){
+    return posicao_atual;
+}

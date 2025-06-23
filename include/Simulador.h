@@ -5,6 +5,9 @@
 #include "Armazem.h"
 #include "Auxiliares.h"
 #include "Transporte.h"
+#include <iostream>
+#include <iomanip>
+using namespace std;
 
 class Simulador {
 private:
@@ -13,6 +16,8 @@ private:
     Grafo* grafo;
     int numArmazens;
     int tempoAtual;
+    int primeiroTransporte;
+    bool primeiroTransporteAgendado;
     void processarChegada(Evento* evento);
     void processarTransporte(Evento* evento);
     int capacidadeTransporte;
