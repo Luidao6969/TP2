@@ -67,3 +67,12 @@ Pacote* StackPacote::pop() {
 bool StackPacote::vazia(){
     return pacotes == nullptr || topo <= 0;
 }
+
+int StackPacote::tamanho() {
+    return topo;
+}
+
+Pacote* StackPacote::top() {
+    if (topo == 0) return nullptr;
+    return pacotes[topo - 1];
+}

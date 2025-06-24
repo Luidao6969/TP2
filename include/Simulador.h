@@ -17,7 +17,7 @@ private:
     int numArmazens;
     int tempoAtual;
     int primeiroTransporte;
-    bool primeiroTransporteAgendado;
+    int tempoPrimeiroPacote ;
     void processarChegada(Evento* evento);
     void processarTransporte(Evento* evento);
     int capacidadeTransporte;

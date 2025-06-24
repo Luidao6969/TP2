@@ -25,6 +25,7 @@ public:
     int getProximoPasso();
     int getPosicaoAtual();
     void avancarNaRota();
+    void setTempoChegada(int tempoAtual);
 };
 
 #endif

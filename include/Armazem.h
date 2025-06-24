@@ -14,6 +14,8 @@ struct StackPacote {
     void push(Pacote* p);
     Pacote* pop();
     bool vazia();
+    int tamanho();
+    Pacote* top();
 };
 
 class Armazem {

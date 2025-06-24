@@ -1,7 +1,9 @@
 #include "../include/Simulador.h"
+#include <unordered_set>
+#include <vector>
 
 Simulador::Simulador(int numArmazens, Grafo *grafo, int capacidadeEscalonador)
-    : numArmazens(numArmazens), grafo(grafo), tempoAtual(0), primeiroTransporte(-1), primeiroTransporteAgendado(false)
+    : numArmazens(numArmazens), grafo(grafo), tempoAtual(0), primeiroTransporte(-1), tempoPrimeiroPacote(-1)
 {
 
     // Inicializa o escalonador com capacidade adequada
@@ -39,8 +41,7 @@ void Simulador::adicionarEvento(Evento *evento)
 
 void Simulador::processarChegada(Evento *evento)
 {
-    // Verificação básica
-    if (!evento || evento->getOrigem() < 0 || evento->getOrigem() >= numArmazens)
+    if (!evento || evento->getOrigem() < 0 || evento->getOrigem() >= numArmazens || !grafo)
     {
         cerr << "Erro: Evento inválido ou origem inválida!" << endl;
         return;
@@ -50,17 +51,8 @@ void Simulador::processarChegada(Evento *evento)
     int origem = evento->getOrigem();
     int destino = evento->getDestino();
 
-    // Verifica se o grafo existe
-    if (!grafo)
-    {
-        cerr << "Erro: Grafo não inicializado!" << endl;
-        return;
-    }
-
-    // Cria o pacote
     Pacote *pacote = new Pacote(idPacote, origem, destino, tempoAtual, *grafo);
 
-    // Verifica se o armazém de origem existe
     if (!armazens[origem])
     {
         cerr << "Erro: Armazém de origem " << origem << " não existe!" << endl;
@@ -68,112 +60,142 @@ void Simulador::processarChegada(Evento *evento)
         return;
     }
 
-    // Processa normalmente
     armazens[origem]->receberPacote(pacote);
 
-    if (!primeiroTransporteAgendado)
+    // Define o tempo do primeiro transporte apenas no primeiro pacote
+    if (tempoPrimeiroPacote == -1)
     {
-        primeiroTransporte = tempoAtual + intervaloTransportes;
+        tempoPrimeiroPacote = tempoAtual + 1;
+        primeiroTransporte = tempoPrimeiroPacote + intervaloTransportes;
         escalonador->inserirEvento(new Evento(primeiroTransporte, 2, -1, -1, -1));
-        primeiroTransporteAgendado = true;
     }
-    // Formata a saída conforme esperado
+
     cout << setfill('0') << setw(7) << tempoAtual << " pacote "
          << setw(3) << pacote->getId() << " armazenado em "
          << setw(3) << origem << " na secao "
          << setw(3) << pacote->getProximoPasso() << endl;
 }
 
+
 void Simulador::processarTransporte(Evento *evento)
 {
-    if (!armazens)
-        return;
+    if (!armazens || !grafo) return;
 
-    // Define tempo base deste transporte
-    if (tempoAtual < primeiroTransporte)
-        tempoAtual = primeiroTransporte;
-    if (!podeTransportar(tempoAtual))
-        return;
-
+    tempoAtual = evento->getTempo();
     ultimoTransporte = tempoAtual;
 
-    // Para cada armazém
+    const int MAX_PACOTES = 10000;
+    bool* pacotesTransportados = new bool[MAX_PACOTES];
+    for (int i = 0; i < MAX_PACOTES; ++i) pacotesTransportados[i] = false;
+
+    int capacidadeMaxMovidos = numArmazens * numArmazens * capacidadeTransporte;
+    int* origens = new int[capacidadeMaxMovidos];
+    int* destinos = new int[capacidadeMaxMovidos];
+    Pacote** pacotes = new Pacote*[capacidadeMaxMovidos];
+    int movidosCount = 0;
+
+    // Coleta dos pacotes a transportar neste ciclo
     for (int origem = 0; origem < numArmazens; ++origem)
     {
-        if (!armazens[origem])
-            continue;
+        if (!armazens[origem]) continue;
 
-        // Para cada seção (ou seja, para cada destino possível)
         for (int destino = 0; destino < numArmazens; ++destino)
         {
-            if (origem == destino)
-                continue;
+            if (origem == destino || !grafo->ehVizinho(origem, destino)) continue;
 
-            StackPacote &stack = armazens[origem]->getStack(destino);
-            Pacote **pacotesCarregados = new Pacote *[capacidadeTransporte];
+            StackPacote& stack = armazens[origem]->getStack(destino);
             int count = 0;
-            int tempoRemocao = tempoAtual;
 
-            for (int i = 0; i < capacidadeTransporte; ++i)
+            while (!stack.vazia() && count < capacidadeTransporte && movidosCount < capacidadeMaxMovidos)
             {
-                if (stack.vazia())
-                    break;
+                Pacote* pacote = stack.top();
+                if (pacotesTransportados[pacote->getId()]) break;
 
-                tempoRemocao += custoRemocao;
-                Pacote *pacote = stack.pop();
-                if (!pacote)
-                    continue;
+                pacote = stack.pop();
+                if (!pacote) continue;
 
-                cout << setfill('0') << setw(7) << tempoRemocao << " pacote "
-                     << setw(3) << pacote->getId() << " removido de "
-                     << setw(3) << origem << " na secao "
-                     << setw(3) << destino << endl;
+                pacotesTransportados[pacote->getId()] = true;
 
-                cout << setfill('0') << setw(7) << tempoRemocao << " pacote "
-                     << setw(3) << pacote->getId() << " em transito de "
-                     << setw(3) << origem << " para "
-                     << setw(3) << pacote->getProximoPasso() << endl;
-
-                pacotesCarregados[count++] = pacote;
+                origens[movidosCount] = origem;
+                destinos[movidosCount] = destino;
+                pacotes[movidosCount] = pacote;
+                ++movidosCount;
+                ++count;
             }
-
-            int tempoChegada = tempoRemocao + latenciaTransporte;
-
-            for (int i = 0; i < count; ++i)
-            {
-                Pacote *pacote = pacotesCarregados[i];
-                if (!pacote)
-                    continue;
-
-                pacote->avancarNaRota();
-                int atual = pacote->getPosicaoAtual();
-                int prox = pacote->getProximoPasso();
-
-                if (atual == pacote->getDestino())
-                {
-                    cout << setfill('0') << setw(7) << tempoChegada << " pacote "
-                         << setw(3) << pacote->getId() << " entregue em "
-                         << setw(3) << pacote->getDestino() << endl;
-                    delete pacote;
-                }
-                else
-                {
-                    armazens[destino]->getStack(prox).push(pacote);
-
-                    cout << setfill('0') << setw(7) << tempoChegada << " pacote "
-                         << setw(3) << pacote->getId() << " armazenado em "
-                         << setw(3) << destino << " na secao "
-                         << setw(3) << prox << endl;
-                }
-            }
-
-            delete[] pacotesCarregados;
         }
     }
 
-    // Agenda próximo transporte global
-    int tempoProx = tempoAtual + intervaloTransportes;
-    escalonador->inserirEvento(new Evento(tempoProx, 2, -1, -1, -1));
+    // Ordenação por origem e ID do pacote (bubble sort)
+    for (int i = 0; i < movidosCount - 1; ++i) {
+        for (int j = 0; j < movidosCount - i - 1; ++j) {
+            int origemA = origens[j];
+            int origemB = origens[j + 1];
+            int idA = pacotes[j]->getId();
+            int idB = pacotes[j + 1]->getId();
+
+            if (origemA > origemB || (origemA == origemB && idA > idB)) {
+                std::swap(origens[j], origens[j + 1]);
+                std::swap(destinos[j], destinos[j + 1]);
+                std::swap(pacotes[j], pacotes[j + 1]);
+            }
+        }
+    }
+
+    int tempoRemocao = tempoAtual;
+    int tempoChegada = tempoAtual + latenciaTransporte;
+
+    // Bloco 1: Impressão de "removido" e "em transito"
+    for (int i = 0; i < movidosCount; ++i)
+    {
+        int origem = origens[i];
+        int destino = destinos[i];
+        Pacote* pacote = pacotes[i];
+
+        cout << setfill('0') << setw(7) << tempoRemocao << " pacote "
+             << setw(3) << pacote->getId() << " removido de "
+             << setw(3) << origem << " na secao "
+             << setw(3) << destino << endl;
+
+        cout << setfill('0') << setw(7) << tempoRemocao << " pacote "
+             << setw(3) << pacote->getId() << " em transito de "
+             << setw(3) << origem << " para "
+             << setw(3) << pacote->getProximoPasso() << endl;
+    }
+
+    // Bloco 2: Processa avanço e imprime "armazenado" ou "entregue"
+    for (int i = 0; i < movidosCount; ++i)
+    {
+        int destino = destinos[i];
+        Pacote* pacote = pacotes[i];
+
+        pacote->avancarNaRota();
+        int prox = pacote->getProximoPasso();
+
+        if (pacote->getPosicaoAtual() == pacote->getDestino())
+        {
+            cout << setfill('0') << setw(7) << tempoChegada << " pacote "
+                 << setw(3) << pacote->getId() << " entregue em "
+                 << setw(3) << pacote->getDestino() << endl;
+            delete pacote;
+        }
+        else
+        {
+            armazens[destino]->getStack(prox).push(pacote);
+            cout << setfill('0') << setw(7) << tempoChegada << " pacote "
+                 << setw(3) << pacote->getId() << " armazenado em "
+                 << setw(3) << destino << " na secao "
+                 << setw(3) << prox << endl;
+        }
+    }
+
+    // Libera memória
+    delete[] pacotesTransportados;
+    delete[] origens;
+    delete[] destinos;
+    delete[] pacotes;
+
+    // Agenda o próximo transporte
+    escalonador->inserirEvento(new Evento(tempoAtual + intervaloTransportes, 2, -1, -1, -1));
 }
 
 void Simulador::executar(int tempoMaximo)
@@ -183,12 +205,11 @@ void Simulador::executar(int tempoMaximo)
         Evento *evento = escalonador->proximoEvento();
         tempoAtual = evento->getTempo();
 
-        // Processa o evento respeitando os tempos
         if (evento->getTipo() == 1)
         {
             processarChegada(evento);
         }
-        else
+        else if (evento->getTipo() == 2)
         {
             processarTransporte(evento);
         }

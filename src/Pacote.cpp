@@ -64,3 +64,7 @@ int Pacote::getTempoChegada(){
 int Pacote::getPosicaoAtual(){
     return posicao_atual;
 }
+
+void Pacote::setTempoChegada(int tempoAtual){
+    tempo_chegada += tempoAtual;
+}
