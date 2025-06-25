@@ -1,29 +1,26 @@
 #include "../include/Simulador.h"
-#include <unordered_set>
-#include <vector>
+
 
 Simulador::Simulador(int numArmazens, Grafo *grafo, int capacidadeEscalonador)
     : numArmazens(numArmazens), grafo(grafo), tempoAtual(0), primeiroTransporte(-1), tempoPrimeiroPacote(-1)
 {
 
-    // Inicializa o escalonador com capacidade adequada
-    escalonador = new Escalonador(capacidadeEscalonador, grafo, 10, 1000); // Exemplo: intervalo=10, tempoLimite=1000
+
+    escalonador = new Escalonador(capacidadeEscalonador, grafo, 10, 100000); 
 }
 
 Simulador::~Simulador()
 {
-    // 1. Limpa o escalonador primeiro
     delete escalonador;
     escalonador = nullptr;
 
-    // 2. Limpa os armazéns (se existirem)
     if (armazens)
     {
         for (int i = 0; i < numArmazens; ++i)
         {
             if (armazens[i])
             {
-                // Não deleta os pacotes aqui - já foram tratados
+                
                 delete armazens[i];
             }
         }
@@ -31,7 +28,7 @@ Simulador::~Simulador()
         armazens = nullptr;
     }
 
-    // 3. Não deleta o grafo - deve ser deletado pelo main
+    
 }
 
 void Simulador::adicionarEvento(Evento *evento)
@@ -94,7 +91,6 @@ void Simulador::processarTransporte(Evento *evento)
     Pacote** pacotes = new Pacote*[capacidadeMaxMovidos];
     int movidosCount = 0;
 
-    // Coleta dos pacotes a transportar neste ciclo
     for (int origem = 0; origem < numArmazens; ++origem)
     {
         if (!armazens[origem]) continue;
@@ -125,7 +121,7 @@ void Simulador::processarTransporte(Evento *evento)
         }
     }
 
-    // Ordenação por origem e ID do pacote (bubble sort)
+
     for (int i = 0; i < movidosCount - 1; ++i) {
         for (int j = 0; j < movidosCount - i - 1; ++j) {
             int origemA = origens[j];
@@ -232,25 +228,16 @@ void Simulador::imprimirEstadoAtual()
 void Simulador::setGrafo(Grafo *g)
 {
     grafo = g;
-    if (grafo)
-    {
-        cout << "Grafo configurado com " << grafo->getSize() << " nós" << endl;
-    }
 }
 
 void Simulador::setArmazens(Armazem **a)
 {
     armazens = a;
-    if (a)
-    {
-        cout << "Armazéns configurados" << endl;
-    }
 }
 
 void Simulador::setNumArmazens(int n)
 {
     numArmazens = n;
-    cout << "Número de armazéns configurado: " << n << endl;
 }
 
 void Simulador::setParametrosTransporte(int capacidade, int latencia, int intervalo, int custo)

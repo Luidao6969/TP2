@@ -14,7 +14,7 @@ Transporte::~Transporte() {
     delete[] pacotes;
 }
 
-void Transporte::carregarPacotes(Armazem* armazemOrigem, int& /*tempoAtual*/) {
+void Transporte::carregarPacotes(Armazem* armazemOrigem, int&) {
     if (!armazemOrigem) return;
     
     StackPacote& stack = armazemOrigem->getStack(destino);
@@ -29,7 +29,7 @@ void Transporte::carregarPacotes(Armazem* armazemOrigem, int& /*tempoAtual*/) {
     }
 }
 
-void Transporte::descarregarPacotes(Armazem* armazemDestino, int& /*tempoAtual*/) {
+void Transporte::descarregarPacotes(Armazem* armazemDestino, int&) {
     if (!armazemDestino) return;
 
     for (int i = 0; i < count; ++i) {

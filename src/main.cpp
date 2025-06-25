@@ -28,15 +28,10 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
     simulador.setParametrosTransporte(capacidadeTransporte, latenciaTransporte, 
                                     intervaloTransportes, custoRemocao);
 
-    cout << "Parâmetros de transporte:\n"
-         << "  Capacidade: " << capacidadeTransporte << "\n"
-         << "  Latência: " << latenciaTransporte << "\n"
-         << "  Intervalo: " << intervaloTransportes << "\n"
-         << "  Custo remoção: " << custoRemocao << endl;
+
 
     // Lê número de armazéns
     arquivo >> numArmazens;
-    cout << "Número de armazéns: " << numArmazens << endl;
 
     // Lê matriz de adjacência
     int** matriz = new int*[numArmazens];
@@ -52,7 +47,6 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
 
     // Cria grafo
     grafo = new Grafo(numArmazens, matriz);
-    cout << "Grafo criado com " << grafo->getSize() << " armazéns" << endl;
 
     // Cria armazéns
     armazens = new Armazem*[numArmazens];
@@ -64,7 +58,6 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
     int totalPacotes;
     int idSequencial = 0;
     arquivo >> totalPacotes;
-    cout << "Total de pacotes: " << totalPacotes << endl;
 
     // Lê pacotes
     string linha;
@@ -86,9 +79,6 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
             cerr << "Erro ao ler linha: " << linha << endl;
             continue;
         }
-
-        cout << "Criando evento: tempo=" << tempo << " id=" << id 
-             << " origem=" << origem << " destino=" << destino << endl;
         
         if (origem < 0 || origem >= numArmazens || destino < 0 || destino >= numArmazens) {
             cerr << "Erro: Origem ou destino inválido na linha: " << linha << endl;
@@ -102,7 +92,15 @@ void lerArquivoEntrada(const string& nomeArquivo, Simulador& simulador, Grafo*& 
     arquivo.close();
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    if (argc != 2) {
+        cerr << "Uso: " << argv[0] << " arquivo.wkl" << endl;
+        return 1;
+    }
+
+    string nomeArquivo = argv[1];
+
     Grafo* grafo = nullptr;
     Armazem** armazens = nullptr;
     int numArmazens = 0;
@@ -112,7 +110,7 @@ int main() {
         Simulador simulador(0, nullptr, 10000);
         
         // Carrega dados
-        lerArquivoEntrada("ex1.txt", simulador, grafo, armazens, numArmazens);
+        lerArquivoEntrada(nomeArquivo, simulador, grafo, armazens, numArmazens);
         
         // Configura
         simulador.setGrafo(grafo);
